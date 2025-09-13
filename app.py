@@ -18,7 +18,7 @@ st.set_page_config(
 # ------------------------------
 try:
     image = Image.open("img.jpg")
-    st.image(image, use_container_width=True)  # ✅ actualizado
+    st.image(image, use_container_width=True)
 except:
     st.warning("⚠️ No se encontró 'img.jpg'. Asegúrate de que esté en la misma carpeta que app.py.")
 
@@ -95,10 +95,21 @@ with tab4:
 
     name = st.text_input("✍️ Ingresa tu nombre para comenzar:")
 
+    # Preguntas
+    questions = [
+        {"q": "¿En qué año se fundó la Free Software Foundation?", "options": ["1980", "1985", "1990"], "answer": "1985"},
+        {"q": "¿Quién fundó la Free Software Foundation?", "options": ["Linus Torvalds", "Bill Gates", "Richard Stallman"], "answer": "Richard Stallman"},
+        {"q": "¿Qué significa GNU?", "options": ["GNU is Not Unix", "General New Utility", "Global Network Union"], "answer": "GNU is Not Unix"},
+        {"q": "¿Qué licencia mantiene la FSF?", "options": ["MIT", "GNU GPL", "Apache"], "answer": "GNU GPL"},
+        {"q": "¿Qué libertad NO pertenece al software libre?", "options": ["Usar el programa con cualquier propósito", "Estudiar y modificar el código", "Prohibir que otros usen el programa"], "answer": "Prohibir que otros usen el programa"}
+    ]
+
     if name:
         if "quiz_started" not in st.session_state:
             st.session_state.quiz_started = False
             st.session_state.start_time = None
+            st.session_state.current_q = 0
+            st.session_state.score = 0
 
         if not st.session_state.quiz_started:
             if st.button("🚀 Comenzar Quiz"):
@@ -106,66 +117,38 @@ with tab4:
                 st.session_state.start_time = time.time()
                 st.rerun()
         else:
-            questions = [
-                {
-                    "q": "¿En qué año se fundó la Free Software Foundation?",
-                    "options": ["1980", "1985", "1990"],
-                    "answer": "1985"
-                },
-                {
-                    "q": "¿Quién fundó la Free Software Foundation?",
-                    "options": ["Linus Torvalds", "Bill Gates", "Richard Stallman"],
-                    "answer": "Richard Stallman"
-                },
-                {
-                    "q": "¿Qué significa GNU?",
-                    "options": ["GNU is Not Unix", "General New Utility", "Global Network Union"],
-                    "answer": "GNU is Not Unix"
-                },
-                {
-                    "q": "¿Qué licencia mantiene la FSF?",
-                    "options": ["MIT", "GNU GPL", "Apache"],
-                    "answer": "GNU GPL"
-                },
-                {
-                    "q": "¿Qué libertad NO pertenece al software libre?",
-                    "options": [
-                        "Usar el programa con cualquier propósito",
-                        "Estudiar y modificar el código",
-                        "Prohibir que otros usen el programa"
-                    ],
-                    "answer": "Prohibir que otros usen el programa"
-                }
-            ]
+            q = questions[st.session_state.current_q]
+            st.subheader(f"Pregunta {st.session_state.current_q + 1}")
+            answer = st.radio(q["q"], q["options"], key=f"q{st.session_state.current_q}")
 
-            score = 0
-            for i, q in enumerate(questions):
-                st.subheader(f"Pregunta {i+1}")
-                answer = st.radio(q["q"], q["options"], key=f"q{i}")
+            if st.button("➡️ Siguiente"):
                 if answer == q["answer"]:
-                    score += 20  # cada respuesta vale 20 puntos
+                    st.session_state.score += 20
+                st.session_state.current_q += 1
 
-            if st.button("✅ Finalizar"):
-                end_time = time.time()
-                elapsed = int(end_time - st.session_state.start_time)
+                if st.session_state.current_q >= len(questions):
+                    # Final del quiz
+                    end_time = time.time()
+                    elapsed = int(end_time - st.session_state.start_time)
+                    penalty = elapsed // 2
+                    final_score = max(st.session_state.score - penalty, 0)
 
-                # Penalización por tiempo: pierde 1 punto cada 2 segundos
-                penalty = elapsed // 2
-                final_score = max(score - penalty, 0)
+                    st.success(f"{name}, tu puntaje final es: **{final_score} / 100** ⏱️ (Tiempo: {elapsed} segundos)")
 
-                st.success(f"{name}, tu puntaje final es: **{final_score} / 100** ⏱️ (Tiempo: {elapsed} segundos)")
+                    # Guardar en CSV
+                    record_file = "scores.csv"
+                    new_entry = pd.DataFrame([[name, final_score, elapsed]], columns=["Nombre", "Puntaje", "Tiempo"])
+                    if os.path.exists(record_file):
+                        df = pd.read_csv(record_file)
+                        df = pd.concat([df, new_entry], ignore_index=True)
+                    else:
+                        df = new_entry
+                    df.to_csv(record_file, index=False)
 
-                # Guardar en CSV
-                record_file = "scores.csv"
-                new_entry = pd.DataFrame([[name, final_score, elapsed]], columns=["Nombre", "Puntaje", "Tiempo"])
-
-                if os.path.exists(record_file):
-                    df = pd.read_csv(record_file)
-                    df = pd.concat([df, new_entry], ignore_index=True)
-                else:
-                    df = new_entry
-
-                df.to_csv(record_file, index=False)
+                    # Reset quiz para próximos intentos
+                    st.session_state.quiz_started = False
+                    st.session_state.current_q = 0
+                    st.session_state.score = 0
                 st.rerun()
 
 # ------------------------------
@@ -178,21 +161,18 @@ with tab5:
         df = pd.read_csv(record_file)
         df = df.sort_values(by="Puntaje", ascending=False).reset_index(drop=True)
 
-        # Agregar columna de ranking con medallas
+        # Ranking con medallas
         medals = ["🥇", "🥈", "🥉"]
         df["Ranking"] = df.index + 1
         df.loc[:2, "Ranking"] = medals[:len(df)]
 
-        # Mostrar ranking con estilo
         st.subheader("📋 Tabla de posiciones")
         st.dataframe(df[["Ranking", "Nombre", "Puntaje", "Tiempo"]], use_container_width=True)
 
-        # Mostrar top 3 más visual
         st.subheader("🔥 Podio")
         for i, row in df.head(3).iterrows():
             st.markdown(f"**{row['Ranking']} {row['Nombre']}** → {row['Puntaje']} puntos ⏱️ {row['Tiempo']}s")
 
-        # Gráfico de barras
         st.subheader("📊 Ranking visual")
         st.bar_chart(df.set_index("Nombre")["Puntaje"])
     else:
