@@ -18,7 +18,7 @@ st.set_page_config(
 # ------------------------------
 try:
     image = Image.open("img.jpg")
-    st.image(image, use_column_width=True)
+    st.image(image, use_container_width=True)  # ✅ actualizado
 except:
     st.warning("⚠️ No se encontró 'img.jpg'. Asegúrate de que esté en la misma carpeta que app.py.")
 
@@ -191,5 +191,9 @@ with tab5:
         st.subheader("🔥 Podio")
         for i, row in df.head(3).iterrows():
             st.markdown(f"**{row['Ranking']} {row['Nombre']}** → {row['Puntaje']} puntos ⏱️ {row['Tiempo']}s")
+
+        # Gráfico de barras
+        st.subheader("📊 Ranking visual")
+        st.bar_chart(df.set_index("Nombre")["Puntaje"])
     else:
         st.info("Aún no hay registros. ¡Sé el primero en jugar el quiz!")
