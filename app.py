@@ -14,6 +14,20 @@ st.set_page_config(
 )
 
 # ------------------------------
+# Funciones para resultados
+# ------------------------------
+record_file = "scores.csv"
+
+def load_results():
+    if os.path.exists(record_file):
+        return pd.read_csv(record_file).to_dict(orient="records")
+    return []
+
+def save_results(resultados):
+    df = pd.DataFrame(resultados)
+    df.to_csv(record_file, index=False)
+
+# ------------------------------
 # Mostrar imagen al inicio
 # ------------------------------
 try:
@@ -87,9 +101,9 @@ with tab3:
     """)
 
 # --------------------------
-# QUIZ INTERACTIVO
+# TAB 4: QUIZ INTERACTIVO
 # --------------------------
-if page == "Quiz":
+with tab4:
     st.header("📝 Quiz sobre FSF y GNU")
     st.write("Responde las siguientes preguntas. Tu puntaje dependerá del tiempo ⏳.")
 
@@ -144,7 +158,6 @@ if page == "Quiz":
             for i, q in enumerate(preguntas):
                 if respuestas_usuario[i] == q["respuesta"]:
                     correct += 1
-                    # Puntaje disminuye con el tiempo
                     score += max(10, base_points - int(elapsed_time))
                 else:
                     incorrect += 1
@@ -159,7 +172,7 @@ if page == "Quiz":
                 "Puntaje": score,
                 "Correctas": correct,
                 "Incorrectas": incorrect,
-                "Tiempo (s)": round(elapsed_time, 2)
+                "Tiempo": round(elapsed_time, 2)
             })
             save_results(resultados)
             st.balloons()
@@ -169,20 +182,19 @@ if page == "Quiz":
     resultados = load_results()
     if resultados:
         df = pd.DataFrame(resultados)
-        st.dataframe(df)
+        st.dataframe(df, use_container_width=True)
     else:
         st.write("Aún no hay resultados registrados.")
+
 # ------------------------------
 # TAB 5: Histórico
 # ------------------------------
 with tab5:
     st.header("🏆 Histórico de Puntajes")
-    record_file = "scores.csv"
     if os.path.exists(record_file):
         df = pd.read_csv(record_file)
         df = df.sort_values(by="Puntaje", ascending=False).reset_index(drop=True)
 
-        # Ranking con medallas
         medals = ["🥇", "🥈", "🥉"]
         df["Ranking"] = df.index + 1
         df.loc[:2, "Ranking"] = medals[:len(df)]
