@@ -105,77 +105,97 @@ with tab3:
 # --------------------------
 with tab4:
     st.header("📝 Quiz sobre FSF y GNU")
-    st.write("Responde las siguientes preguntas. Tu puntaje dependerá del tiempo ⏳.")
+    st.write("Responde las preguntas una por una. Tu puntaje dependerá del tiempo ⏳.")
 
-    if "quiz_start_time" not in st.session_state:
-        st.session_state.quiz_start_time = time.time()
+    # Configuración inicial
+    if "quiz_started" not in st.session_state:
+        st.session_state.quiz_started = False
+        st.session_state.quiz_start_time = None
+        st.session_state.current_q = 0
+        st.session_state.correct = 0
+        st.session_state.incorrect = 0
+        st.session_state.answers = []
+        st.session_state.name = ""
 
-    name = st.text_input("Ingresa tu nombre antes de empezar:", "")
-    if name:
-        correct = 0
-        incorrect = 0
-        score = 0
+    preguntas = [
+        {
+            "pregunta": "¿En qué año se fundó la Free Software Foundation (FSF)?",
+            "opciones": ["1980", "1983", "1985", "1990"],
+            "respuesta": "1985"
+        },
+        {
+            "pregunta": "¿Quién fundó la Free Software Foundation?",
+            "opciones": ["Linus Torvalds", "Richard Stallman", "Dennis Ritchie", "Bill Gates"],
+            "respuesta": "Richard Stallman"
+        },
+        {
+            "pregunta": "¿Qué significa GNU?",
+            "opciones": ["General Network Utility", "GNU's Not Unix", "Global New Unix", "General New Utility"],
+            "respuesta": "GNU's Not Unix"
+        },
+        {
+            "pregunta": "¿Qué relación tiene GNU con Linux?",
+            "opciones": ["Ninguna", "Linux es parte de GNU", "GNU provee herramientas y utilidades para Linux", "GNU fue creado después de Linux"],
+            "respuesta": "GNU provee herramientas y utilidades para Linux"
+        },
+        {
+            "pregunta": "¿Cuál es uno de los principales objetivos de la FSF?",
+            "opciones": ["Promover software privativo", "Defender la libertad de los usuarios de software", "Vender licencias comerciales", "Eliminar Linux"],
+            "respuesta": "Defender la libertad de los usuarios de software"
+        }
+    ]
 
-        # Preguntas y respuestas
-        preguntas = [
-            {
-                "pregunta": "¿En qué año se fundó la Free Software Foundation (FSF)?",
-                "opciones": ["1980", "1983", "1985", "1990"],
-                "respuesta": "1985"
-            },
-            {
-                "pregunta": "¿Quién fundó la Free Software Foundation?",
-                "opciones": ["Linus Torvalds", "Richard Stallman", "Dennis Ritchie", "Bill Gates"],
-                "respuesta": "Richard Stallman"
-            },
-            {
-                "pregunta": "¿Qué significa GNU?",
-                "opciones": ["General Network Utility", "GNU's Not Unix", "Global New Unix", "General New Utility"],
-                "respuesta": "GNU's Not Unix"
-            },
-            {
-                "pregunta": "¿Qué relación tiene GNU con Linux?",
-                "opciones": ["Ninguna", "Linux es parte de GNU", "GNU provee herramientas y utilidades para Linux", "GNU fue creado después de Linux"],
-                "respuesta": "GNU provee herramientas y utilidades para Linux"
-            },
-            {
-                "pregunta": "¿Cuál es uno de los principales objetivos de la FSF?",
-                "opciones": ["Promover software privativo", "Defender la libertad de los usuarios de software", "Vender licencias comerciales", "Eliminar Linux"],
-                "respuesta": "Defender la libertad de los usuarios de software"
-            }
-        ]
+    # Nombre
+    if not st.session_state.quiz_started:
+        name = st.text_input("Ingresa tu nombre para comenzar:", "")
+        if name:
+            if st.button("Comenzar Quiz"):
+                st.session_state.quiz_started = True
+                st.session_state.quiz_start_time = time.time()
+                st.session_state.name = name
+                st.rerun()
+    else:
+        q_index = st.session_state.current_q
+        if q_index < len(preguntas):
+            q = preguntas[q_index]
+            st.subheader(f"Pregunta {q_index+1} de {len(preguntas)}")
+            r = st.radio(q["pregunta"], q["opciones"], key=f"q{q_index}")
 
-        respuestas_usuario = []
-        for i, q in enumerate(preguntas):
-            st.subheader(f"Pregunta {i+1}")
-            r = st.radio(q["pregunta"], q["opciones"], key=f"q{i}")
-            respuestas_usuario.append(r)
+            if st.button("Responder"):
+                if r == q["respuesta"]:
+                    st.success("✅ ¡Correcto!")
+                    st.session_state.correct += 1
+                else:
+                    st.error(f"❌ Incorrecto. La respuesta era: {q['respuesta']}")
+                    st.session_state.incorrect += 1
 
-        if st.button("Enviar respuestas"):
+                st.session_state.answers.append(r)
+                st.session_state.current_q += 1
+                st.rerun()
+        else:
             elapsed_time = time.time() - st.session_state.quiz_start_time
             base_points = 100
+            score = max(10, base_points - int(elapsed_time)) * st.session_state.correct
 
-            for i, q in enumerate(preguntas):
-                if respuestas_usuario[i] == q["respuesta"]:
-                    correct += 1
-                    score += max(10, base_points - int(elapsed_time))
-                else:
-                    incorrect += 1
+            st.success(f"🎉 {st.session_state.name}, terminaste el quiz")
+            st.info(f"✅ Correctas: {st.session_state.correct} | ❌ Incorrectas: {st.session_state.incorrect}")
+            st.info(f"🏆 Puntaje final: {score}")
 
-            st.success(f"🎉 {name}, tu puntaje final es: {score}")
-            st.info(f"✅ Correctas: {correct} | ❌ Incorrectas: {incorrect}")
-
-            # Guardar resultado en el histórico
             resultados = load_results()
             resultados.append({
-                "Nombre": name,
+                "Nombre": st.session_state.name,
                 "Puntaje": score,
-                "Correctas": correct,
-                "Incorrectas": incorrect,
+                "Correctas": st.session_state.correct,
+                "Incorrectas": st.session_state.incorrect,
                 "Tiempo": round(elapsed_time, 2)
             })
             save_results(resultados)
             st.balloons()
+
+            if st.button("Reiniciar Quiz"):
+                for key in list(st.session_state.keys()):
+                    del st.session_state[key]
+                st.rerun()
 
     st.markdown("---")
     st.subheader("📊 Resultados Históricos")
