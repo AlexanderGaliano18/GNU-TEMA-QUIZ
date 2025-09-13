@@ -86,71 +86,92 @@ with tab3:
     - Ha impulsado proyectos como **Linux, Firefox, LibreOffice**.
     """)
 
-# ------------------------------
-# TAB 4: Quiz
-# ------------------------------
-with tab4:
-    st.header("❓ Quiz Interactivo")
-    st.markdown("Pon a prueba lo que aprendiste sobre **FSF y GNU**. El puntaje baja mientras más demores ⏳.")
+# --------------------------
+# QUIZ INTERACTIVO
+# --------------------------
+if page == "Quiz":
+    st.header("📝 Quiz sobre FSF y GNU")
+    st.write("Responde las siguientes preguntas. Tu puntaje dependerá del tiempo ⏳.")
 
-    name = st.text_input("✍️ Ingresa tu nombre para comenzar:")
+    if "quiz_start_time" not in st.session_state:
+        st.session_state.quiz_start_time = time.time()
 
-    # Preguntas
-    questions = [
-        {"q": "¿En qué año se fundó la Free Software Foundation?", "options": ["1980", "1985", "1990"], "answer": "1985"},
-        {"q": "¿Quién fundó la Free Software Foundation?", "options": ["Linus Torvalds", "Bill Gates", "Richard Stallman"], "answer": "Richard Stallman"},
-        {"q": "¿Qué significa GNU?", "options": ["GNU is Not Unix", "General New Utility", "Global Network Union"], "answer": "GNU is Not Unix"},
-        {"q": "¿Qué licencia mantiene la FSF?", "options": ["MIT", "GNU GPL", "Apache"], "answer": "GNU GPL"},
-        {"q": "¿Qué libertad NO pertenece al software libre?", "options": ["Usar el programa con cualquier propósito", "Estudiar y modificar el código", "Prohibir que otros usen el programa"], "answer": "Prohibir que otros usen el programa"}
-    ]
-
+    name = st.text_input("Ingresa tu nombre antes de empezar:", "")
     if name:
-        if "quiz_started" not in st.session_state:
-            st.session_state.quiz_started = False
-            st.session_state.start_time = None
-            st.session_state.current_q = 0
-            st.session_state.score = 0
+        correct = 0
+        incorrect = 0
+        score = 0
 
-        if not st.session_state.quiz_started:
-            if st.button("🚀 Comenzar Quiz"):
-                st.session_state.quiz_started = True
-                st.session_state.start_time = time.time()
-                st.rerun()
-        else:
-            q = questions[st.session_state.current_q]
-            st.subheader(f"Pregunta {st.session_state.current_q + 1}")
-            answer = st.radio(q["q"], q["options"], key=f"q{st.session_state.current_q}")
+        # Preguntas y respuestas
+        preguntas = [
+            {
+                "pregunta": "¿En qué año se fundó la Free Software Foundation (FSF)?",
+                "opciones": ["1980", "1983", "1985", "1990"],
+                "respuesta": "1985"
+            },
+            {
+                "pregunta": "¿Quién fundó la Free Software Foundation?",
+                "opciones": ["Linus Torvalds", "Richard Stallman", "Dennis Ritchie", "Bill Gates"],
+                "respuesta": "Richard Stallman"
+            },
+            {
+                "pregunta": "¿Qué significa GNU?",
+                "opciones": ["General Network Utility", "GNU's Not Unix", "Global New Unix", "General New Utility"],
+                "respuesta": "GNU's Not Unix"
+            },
+            {
+                "pregunta": "¿Qué relación tiene GNU con Linux?",
+                "opciones": ["Ninguna", "Linux es parte de GNU", "GNU provee herramientas y utilidades para Linux", "GNU fue creado después de Linux"],
+                "respuesta": "GNU provee herramientas y utilidades para Linux"
+            },
+            {
+                "pregunta": "¿Cuál es uno de los principales objetivos de la FSF?",
+                "opciones": ["Promover software privativo", "Defender la libertad de los usuarios de software", "Vender licencias comerciales", "Eliminar Linux"],
+                "respuesta": "Defender la libertad de los usuarios de software"
+            }
+        ]
 
-            if st.button("➡️ Siguiente"):
-                if answer == q["answer"]:
-                    st.session_state.score += 20
-                st.session_state.current_q += 1
+        respuestas_usuario = []
+        for i, q in enumerate(preguntas):
+            st.subheader(f"Pregunta {i+1}")
+            r = st.radio(q["pregunta"], q["opciones"], key=f"q{i}")
+            respuestas_usuario.append(r)
 
-                if st.session_state.current_q >= len(questions):
-                    # Final del quiz
-                    end_time = time.time()
-                    elapsed = int(end_time - st.session_state.start_time)
-                    penalty = elapsed // 2
-                    final_score = max(st.session_state.score - penalty, 0)
+        if st.button("Enviar respuestas"):
+            elapsed_time = time.time() - st.session_state.quiz_start_time
+            base_points = 100
 
-                    st.success(f"{name}, tu puntaje final es: **{final_score} / 100** ⏱️ (Tiempo: {elapsed} segundos)")
+            for i, q in enumerate(preguntas):
+                if respuestas_usuario[i] == q["respuesta"]:
+                    correct += 1
+                    # Puntaje disminuye con el tiempo
+                    score += max(10, base_points - int(elapsed_time))
+                else:
+                    incorrect += 1
 
-                    # Guardar en CSV
-                    record_file = "scores.csv"
-                    new_entry = pd.DataFrame([[name, final_score, elapsed]], columns=["Nombre", "Puntaje", "Tiempo"])
-                    if os.path.exists(record_file):
-                        df = pd.read_csv(record_file)
-                        df = pd.concat([df, new_entry], ignore_index=True)
-                    else:
-                        df = new_entry
-                    df.to_csv(record_file, index=False)
+            st.success(f"🎉 {name}, tu puntaje final es: {score}")
+            st.info(f"✅ Correctas: {correct} | ❌ Incorrectas: {incorrect}")
 
-                    # Reset quiz para próximos intentos
-                    st.session_state.quiz_started = False
-                    st.session_state.current_q = 0
-                    st.session_state.score = 0
-                st.rerun()
+            # Guardar resultado en el histórico
+            resultados = load_results()
+            resultados.append({
+                "Nombre": name,
+                "Puntaje": score,
+                "Correctas": correct,
+                "Incorrectas": incorrect,
+                "Tiempo (s)": round(elapsed_time, 2)
+            })
+            save_results(resultados)
+            st.balloons()
 
+    st.markdown("---")
+    st.subheader("📊 Resultados Históricos")
+    resultados = load_results()
+    if resultados:
+        df = pd.DataFrame(resultados)
+        st.dataframe(df)
+    else:
+        st.write("Aún no hay resultados registrados.")
 # ------------------------------
 # TAB 5: Histórico
 # ------------------------------
