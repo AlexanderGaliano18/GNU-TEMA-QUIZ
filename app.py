@@ -9,6 +9,7 @@ import os
 # ------------------------------
 st.set_page_config(
     page_title="FSF & GNU",
+    page_icon="💻",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -107,7 +108,6 @@ with tab4:
     st.header("📝 Quiz sobre FSF y GNU")
     st.write("Responde las preguntas una por una. Tu puntaje dependerá del tiempo ⏳.")
 
-    # Configuración inicial
     if "quiz_started" not in st.session_state:
         st.session_state.quiz_started = False
         st.session_state.quiz_start_time = None
@@ -118,34 +118,20 @@ with tab4:
         st.session_state.name = ""
 
     preguntas = [
-        {
-            "pregunta": "¿En qué año se fundó la Free Software Foundation (FSF)?",
-            "opciones": ["1980", "1983", "1985", "1990"],
-            "respuesta": "1985"
-        },
-        {
-            "pregunta": "¿Quién fundó la Free Software Foundation?",
-            "opciones": ["Linus Torvalds", "Richard Stallman", "Dennis Ritchie", "Bill Gates"],
-            "respuesta": "Richard Stallman"
-        },
-        {
-            "pregunta": "¿Qué significa GNU?",
-            "opciones": ["General Network Utility", "GNU's Not Unix", "Global New Unix", "General New Utility"],
-            "respuesta": "GNU's Not Unix"
-        },
-        {
-            "pregunta": "¿Qué relación tiene GNU con Linux?",
-            "opciones": ["Ninguna", "Linux es parte de GNU", "GNU provee herramientas y utilidades para Linux", "GNU fue creado después de Linux"],
-            "respuesta": "GNU provee herramientas y utilidades para Linux"
-        },
-        {
-            "pregunta": "¿Cuál es uno de los principales objetivos de la FSF?",
-            "opciones": ["Promover software privativo", "Defender la libertad de los usuarios de software", "Vender licencias comerciales", "Eliminar Linux"],
-            "respuesta": "Defender la libertad de los usuarios de software"
-        }
+        {"pregunta": "¿En qué año se fundó la Free Software Foundation (FSF)?",
+         "opciones": ["1980", "1983", "1985", "1990"], "respuesta": "1985"},
+        {"pregunta": "¿Quién fundó la Free Software Foundation?",
+         "opciones": ["Linus Torvalds", "Richard Stallman", "Dennis Ritchie", "Bill Gates"], "respuesta": "Richard Stallman"},
+        {"pregunta": "¿Qué significa GNU?",
+         "opciones": ["General Network Utility", "GNU's Not Unix", "Global New Unix", "General New Utility"], "respuesta": "GNU's Not Unix"},
+        {"pregunta": "¿Qué relación tiene GNU con Linux?",
+         "opciones": ["Ninguna", "Linux es parte de GNU", "GNU provee herramientas y utilidades para Linux", "GNU fue creado después de Linux"],
+         "respuesta": "GNU provee herramientas y utilidades para Linux"},
+        {"pregunta": "¿Cuál es uno de los principales objetivos de la FSF?",
+         "opciones": ["Promover software privativo", "Defender la libertad de los usuarios de software", "Vender licencias comerciales", "Eliminar Linux"],
+         "respuesta": "Defender la libertad de los usuarios de software"}
     ]
 
-    # Nombre
     if not st.session_state.quiz_started:
         name = st.text_input("Ingresa tu nombre para comenzar:", "")
         if name:
@@ -230,3 +216,9 @@ with tab5:
         st.bar_chart(df.set_index("Nombre")["Puntaje"])
     else:
         st.info("Aún no hay registros. ¡Sé el primero en jugar el quiz!")
+
+# ------------------------------
+# Autor
+# ------------------------------
+st.markdown("---")
+st.caption("👨‍💻 Desarrollado por **Alex Galiano** con ❤️ y Streamlit")
