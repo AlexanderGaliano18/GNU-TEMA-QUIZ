@@ -176,6 +176,20 @@ with tab5:
     record_file = "scores.csv"
     if os.path.exists(record_file):
         df = pd.read_csv(record_file)
-        st.dataframe(df.sort_values(by="Puntaje", ascending=False), use_container_width=True)
+        df = df.sort_values(by="Puntaje", ascending=False).reset_index(drop=True)
+
+        # Agregar columna de ranking con medallas
+        medals = ["🥇", "🥈", "🥉"]
+        df["Ranking"] = df.index + 1
+        df.loc[:2, "Ranking"] = medals[:len(df)]
+
+        # Mostrar ranking con estilo
+        st.subheader("📋 Tabla de posiciones")
+        st.dataframe(df[["Ranking", "Nombre", "Puntaje", "Tiempo"]], use_container_width=True)
+
+        # Mostrar top 3 más visual
+        st.subheader("🔥 Podio")
+        for i, row in df.head(3).iterrows():
+            st.markdown(f"**{row['Ranking']} {row['Nombre']}** → {row['Puntaje']} puntos ⏱️ {row['Tiempo']}s")
     else:
         st.info("Aún no hay registros. ¡Sé el primero en jugar el quiz!")
