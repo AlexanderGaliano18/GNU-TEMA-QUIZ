@@ -221,4 +221,4 @@ with tab5:
 # Autor
 # ------------------------------
 st.markdown("---")
-st.caption("👨‍💻 Desarrollado por **Alex Galiano** con ❤️ y Streamlit")
+st.caption("👨‍💻 Desarrollado por **Alex Galiano** con ❤️ en el Curso de Software Libre")
